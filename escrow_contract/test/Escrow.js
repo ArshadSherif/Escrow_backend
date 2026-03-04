@@ -45,25 +45,7 @@ describe("Escrow Milestone Contract", function () {
     ).to.be.revertedWith("Only buyer can call this function");
   });
 
-  it("Cannot release without approval", async function () {
-    await escrow
-      .connect(buyer)
-      .fundMilestone(0, { value: milestoneAmounts[0] });
 
-    await expect(escrow.connect(seller).releaseMilestone(0)).to.be.revertedWith(
-      "Milestone not approved",
-    );
-  });
-
-  it("Cannot release without approval", async function () {
-    await escrow
-      .connect(buyer)
-      .fundMilestone(0, { value: milestoneAmounts[0] });
-
-    await expect(escrow.connect(seller).releaseMilestone(0)).to.be.revertedWith(
-      "Milestone not approved",
-    );
-  });
 
   it("Cannot fund twice", async function () {
     await escrow
@@ -114,42 +96,4 @@ describe("Escrow Milestone Contract", function () {
     expect(milestone.approved).to.equal(true);
   });
 
-  it("Seller releases milestone after approval", async function () {
-    await escrow
-      .connect(buyer)
-      .fundMilestone(0, { value: milestoneAmounts[0] });
-
-    await escrow.connect(buyer).approveMilestone(0);
-
-    const sellerBalanceBefore = await ethers.provider.getBalance(
-      seller.address,
-    );
-
-    const tx = await escrow.connect(seller).releaseMilestone(0);
-    const receipt = await tx.wait();
-
-    const gasUsed = receipt.gasUsed * receipt.gasPrice;
-
-    const sellerBalanceAfter = await ethers.provider.getBalance(seller.address);
-
-    expect(sellerBalanceAfter).to.be.gt(sellerBalanceBefore);
-  });
-
-  it("Should mark escrow complete after all releases", async function () {
-    // Milestone 0
-    await escrow
-      .connect(buyer)
-      .fundMilestone(0, { value: milestoneAmounts[0] });
-    await escrow.connect(buyer).approveMilestone(0);
-    await escrow.connect(seller).releaseMilestone(0);
-
-    // Milestone 1
-    await escrow
-      .connect(buyer)
-      .fundMilestone(1, { value: milestoneAmounts[1] });
-    await escrow.connect(buyer).approveMilestone(1);
-    await escrow.connect(seller).releaseMilestone(1);
-
-    expect(await escrow.isComplete()).to.equal(true);
-  });
 });

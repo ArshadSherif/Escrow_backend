@@ -20,12 +20,28 @@ export const createEscrow = async (req, res, next) => {
   }
 };
 
-
 export const fundMilestoneController = async (req, res, next) => {
   try {
     const { escrowId, milestoneIndex } = req.body;
 
     const result = await escrowService.fundMilestone({
+      escrowId,
+      milestoneIndex,
+    });
+
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+
+export const approveMilestoneController = async (req, res, next) => {
+  try {
+    const { escrowId, milestoneIndex } = req.body;
+
+    const result = await escrowService.approveMilestone({
       escrowId,
       milestoneIndex,
     });

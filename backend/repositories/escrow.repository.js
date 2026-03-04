@@ -86,3 +86,17 @@ export const markMilestoneFunded = async (escrowId, milestoneIndex) => {
     [escrowId, milestoneIndex],
   );
 };
+
+export const markMilestoneApprovedAndReleased = async (
+  escrowId,
+  milestoneIndex,
+) => {
+  await pool.query(
+    `UPDATE milestones
+     SET approved = TRUE,
+         released = TRUE
+     WHERE escrow_id = $1
+     AND milestone_index = $2`,
+    [escrowId, milestoneIndex],
+  );
+};

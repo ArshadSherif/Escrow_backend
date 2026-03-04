@@ -1,8 +1,7 @@
 import { ethers } from "ethers";
 import EscrowArtifact from "../../escrow_contract/artifacts/contracts/Escrow.sol/Escrow.json" with { type: "json" };
 
-const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
-const wallet = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY, provider);
+import { wallet } from "../config/blockchain.js";
 
 export const deployEscrow = async (buyer, seller, milestones) => {
   const factory = new ethers.ContractFactory(
@@ -34,6 +33,20 @@ export const fundMilestoneTx = async (
   const tx = await escrow.fundMilestone(milestoneIndex, {
     value: ethers.parseEther(amount.toString()),
   });
+
+  await tx.wait();
+
+  return tx.hash;
+};
+
+export const approveMilestoneTx = async (contractAddress, milestoneIndex) => {
+  const escrow = new ethers.Contract(
+    contractAddress,
+    EscrowArtifact.abi,
+    wallet,
+  );
+
+  const tx = await escrow.approveMilestone(milestoneIndex);
 
   await tx.wait();
 

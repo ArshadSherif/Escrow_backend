@@ -1,9 +1,10 @@
-import { deployEscrow, fundMilestoneTx } from "./blockchain.service.js";
+import { deployEscrow, fundMilestoneTx,approveMilestoneTx } from "./blockchain.service.js";
 import {
   insertEscrowWithMilestones,
   getEscrowById,
   getMilestone,
   markMilestoneFunded,
+  markMilestoneApprovedAndReleased,
 } from "../repositories/escrow.repository.js";
 
 import { ethers } from "ethers";
@@ -50,6 +51,46 @@ export const createEscrow = async ({ buyer, seller, milestones }) => {
 
 export const fundMilestone = async ({ escrowId, milestoneIndex }) => {
   const escrow = await getEscrowById(escrowId);
+  if (!escrow) {
+    throw new Error("Escrow not found");
+  }
+
+  const milestone = await getMilestone(escrowId, milestoneIndex);
+  if (!milestone) {
+    throw new Error("Milestone not found");
+  }
+
+  const contractAddress = escrow.contract_address;
+  const amount = milestone.amount;
+
+  let txHash;
+
+  try {
+    txHash = await fundMilestoneTx(contractAddress, milestoneIndex, amount);
+  } catch (err) {
+    if (err.reason) {
+      throw new Error(err.reason);
+    }
+
+    if (err.shortMessage) {
+      throw new Error(err.shortMessage);
+    }
+
+    throw err;
+  }
+
+  await markMilestoneFunded(escrowId, milestoneIndex);
+
+  return {
+    success: true,
+    contractAddress,
+    milestoneIndex,
+    txHash,
+  };
+};
+
+export const approveMilestone = async ({ escrowId, milestoneIndex }) => {
+  const escrow = await getEscrowById(escrowId);
 
   if (!escrow) {
     throw new Error("Escrow not found");
@@ -62,11 +103,34 @@ export const fundMilestone = async ({ escrowId, milestoneIndex }) => {
   }
 
   const contractAddress = escrow.contract_address;
-  const amount = milestone.amount;
 
-  const txHash = await fundMilestoneTx(contractAddress, milestoneIndex, amount);
+  let txHash;
 
-  await markMilestoneFunded(escrowId, milestoneIndex);
+  try {
+    txHash = await approveMilestoneTx(contractAddress, milestoneIndex);
+  } catch (err) {
+    console.error("Blockchain error:", err);
+
+    if (err.shortMessage) {
+      const msg = err.shortMessage
+        .replace('execution reverted: "', "")
+        .replace('"', "");
+
+      throw new Error(msg);
+    }
+
+    if (err.reason) {
+      throw new Error(err.reason);
+    }
+
+    if (err.revert && err.revert.args && err.revert.args.length > 0) {
+      throw new Error(err.revert.args[0]);
+    }
+
+    throw err;
+  }
+
+  await markMilestoneApprovedAndReleased(escrowId, milestoneIndex);
 
   return {
     success: true,

@@ -63,33 +63,22 @@ contract Escrow {
         m.funded = true;
     }
 
-    // Buyer calls this to approve a milestone after verifying the work is done
-    function approveMilestone(uint256 index) public onlyBuyer {
-        require(index < milestones.length, "Invalid milestone index");
+    // Buyer calls this to approve a milestone after verifying the work is done and automatically relases 
+  function approveMilestone(uint256 index) public onlyBuyer {
+    require(index < milestones.length, "Invalid milestone index");
 
-        Milestone storage m = milestones[index];
+    Milestone storage m = milestones[index];
 
-        require(m.funded, "Milestone not funded");
-        require(!m.approved, "Milestone already approved");
+    require(m.funded, "Milestone not funded");
+    require(!m.approved, "Milestone already approved");
+    require(!m.released, "Milestone already released");
 
-        m.approved = true;
-    }
+    m.approved = true;
+    m.released = true;
 
-    // Seller?Buer  calls this to release funds for a milestone after buyer approval
-    function releaseMilestone(uint256 index) public onlySeller {
-        require(index < milestones.length, "Invalid milestone index");
-
-        Milestone storage m = milestones[index];
-
-        require(m.funded, "Milestone not funded");
-        require(m.approved, "Milestone not approved");
-        require(!m.released, "Milestone already released");
-
-        m.released = true;
-
-        (bool success, ) = payable(seller).call{value: m.amount}("");
-        require(success, "Transfer failed");
-    }
+    (bool success, ) = payable(seller).call{value: m.amount}("");
+    require(success, "Transfer failed");
+}
 
     // Helper view off-chain function to check if all milestones are complete
     function isComplete() public view returns (bool) {

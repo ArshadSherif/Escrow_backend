@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-cache-2",
   "files": {
-    "/home/sgbook4/Desktop/dev/escrow_contract/contracts/Escrow.sol": {
+    "/home/sgbook4/Desktop/dev/escrow/escrow_contract/contracts/Escrow.sol": {
       "lastModificationDate": 1772473364941,
       "contentHash": "7b09ca947b29ce49b62f0682ae95b815",
       "sourceName": "contracts/Escrow.sol",

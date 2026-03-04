@@ -27,13 +27,19 @@ export const insertEscrowWithMilestones = async ({
 
     // Insert milestones
     for (let i = 0; i < milestones.length; i++) {
+      const milestone = milestones[i];
+
       await client.query(
-        `
-        INSERT INTO milestones
-        (escrow_id, milestone_index, amount)
-        VALUES ($1, $2, $3)
-        `,
-        [escrowId, i, milestones[i]],
+        `INSERT INTO milestones (
+          escrow_id,
+          milestone_index,
+          amount,
+          funded,
+          approved,
+          released
+      )
+      VALUES ($1,$2,$3,false,false,false)`,
+        [escrowId, i, milestone.amount],
       );
     }
 
@@ -46,4 +52,37 @@ export const insertEscrowWithMilestones = async ({
   } finally {
     client.release();
   }
+};
+
+export const getEscrowById = async (escrowId) => {
+  const result = await pool.query(
+    `SELECT contract_address
+     FROM escrows
+     WHERE id = $1`,
+    [escrowId],
+  );
+
+  return result.rows[0];
+};
+
+export const getMilestone = async (escrowId, milestoneIndex) => {
+  const result = await pool.query(
+    `SELECT amount
+     FROM milestones
+     WHERE escrow_id = $1
+     AND milestone_index = $2`,
+    [escrowId, milestoneIndex],
+  );
+
+  return result.rows[0];
+};
+
+export const markMilestoneFunded = async (escrowId, milestoneIndex) => {
+  await pool.query(
+    `UPDATE milestones
+     SET funded = TRUE
+     WHERE escrow_id = $1
+     AND milestone_index = $2`,
+    [escrowId, milestoneIndex],
+  );
 };
